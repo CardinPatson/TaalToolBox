@@ -1,37 +1,27 @@
-import axios from 'axios'
+import { apiClient, apiClientForm } from './apiClient'
+import { useUserStore } from '@/stores/user'
 
-const apiClient = axios.create({
-  baseURL: 'http://localhost:3000',
-  withCredentials: false,
-  headers: {
-    Accept: 'application/json',
-    'Content-Type': 'application/json'
-  }
-})
-
-const apiClientForm = axios.create({
-  baseURL: 'http://localhost:3000',
-  headers: {
-    'Content-Type': 'multipart/form-data'
-  }
-})
-
-interface Flashcard {
-  word: string
-  translation: string
+interface FlashcardForm {
+  word: string | null
+  translation: string | null
 }
+
 interface FlashcardImage {
   id: string
   image: any
 }
+
 export default {
-  getFlashcards() {
-    return apiClient.get('/cards')
+  async getFlashcards(nbrcards: number) {
+    const store = await useUserStore().getUserScope()
+    return apiClient.get('/cards/' + store.id + '/' + nbrcards)
   },
+
   getFlashcard(id: string) {
     return apiClient.get('/cards/' + id)
   },
-  postFlashcard(flashcard: Flashcard) {
+
+  postFlashcard(flashcard: FlashcardForm) {
     // for (var key of formData.entries()) {
     //   console.log(key[0] + ', ' + key[1])
     // }
@@ -44,6 +34,7 @@ export default {
   deleteFlashcard(id: string) {
     return apiClient.delete('/cards/' + id)
   },
+
   uploadImage(flashcardimage: FlashcardImage) {
     let formData = new FormData()
     formData.append('id', flashcardimage.id)

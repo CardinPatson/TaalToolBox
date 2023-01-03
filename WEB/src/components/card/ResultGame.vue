@@ -1,16 +1,18 @@
 <script setup lang="ts">
-  import { ref } from 'vue'
+  import { ref, onMounted } from 'vue'
   import { useCardStore } from '@/stores/card'
   import { computed } from '@vue/reactivity'
+  import { useUserStore } from '@/stores/user'
   const store = useCardStore()
-  const correctAnswer = computed(() => store.goodAnswers)
-  const almostCorrectAnswer = computed(() => store.almostGoodAnswers)
-  const wrongAnswer = computed(() => store.wrongAnswers)
   const totalScore = computed(() => store.goodAnswerPercentage)
-
   const correctColor = ref('#4caf50')
   const almostCorrectColor = ref('#ff9800')
   const wrongColor = ref('#f44336')
+
+  const postUserResponse = async () => {
+    const userScope = await useUserStore().getUserScope()
+    await store.postUserResponse(userScope.id)
+  }
 </script>
 
 <template>
@@ -48,7 +50,7 @@
           <i class="fa-solid fa-check" />
           <p class="result__item__title">J'ai trouvé :</p>
         </div>
-        <p class="result__item__value">{{ correctAnswer }}</p>
+        <p class="result__item__value">{{ store.resultGame.goodAnswers }}</p>
       </div>
 
       <div class="result__item almost">
@@ -56,7 +58,7 @@
           <i class="fa-solid fa-exclamation" />
           <p class="result__item__title">J'y étais présque :</p>
         </div>
-        <p class="result__item__value">{{ almostCorrectAnswer }}</p>
+        <p class="result__item__value">{{ store.resultGame.almostGoodAnswers }}</p>
       </div>
 
       <div class="result__item wrong">
@@ -64,18 +66,18 @@
           <i class="fa-solid fa-times" />
           <p class="result__item__title">Je ne savais pas :</p>
         </div>
-        <p class="result__item__value">{{ wrongAnswer }}</p>
+        <p class="result__item__value">{{ store.resultGame.wrongAnswers }}</p>
       </div>
     </div>
     <hr />
-    <div class="score">
-      <p>
-        Votre score est de <span id="total-score">{{ totalScore }}</span> points !
-      </p>
-    </div>
     <div class="btn-container">
       <router-link to="/">
-        <button class="btn-return">Retour à la carte</button>
+        <button
+          class="btn-return"
+          @click="postUserResponse"
+        >
+          Retour à la carte
+        </button>
       </router-link>
     </div>
   </div>

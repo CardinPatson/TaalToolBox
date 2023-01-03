@@ -1,24 +1,58 @@
 <script setup lang="ts">
   import { reactive } from 'vue'
-  import logo from '@/assets/logo/logo.svg'
+  import { useUserStore } from '@/stores/user'
+  import { sha512 } from 'js-sha512'
 
-  const state = reactive({
+  const store = useUserStore()
+
+  interface State {
+    mail: string
+    password: string
+  }
+  const state: State = reactive({
     mail: '',
     password: ''
   })
   const manage = reactive({
-    error: ''
+    error: '',
+    succes: ''
   })
-
   const checkFields = () => {
-    for (let key in state) {
-      if (state[key] == '') {
-        manage.error = 'Veuillez compléter tous les champs !'
-        console.log(key)
-        return 1
-      }
-      //TODO: Envoyer les données au back pour tenter connecter
-      console.log('Envoyer les données au back pour tenter de se connecter')
+    manage.error = ''
+    manage.succes = ''
+    if (state.mail === '' || state.password === '') {
+      manage.error = 'Veuillez remplir tous les champs'
+      return 1
+    } else {
+      sendData()
+    }
+  }
+  // Route pour tester le middleware d'authentification
+  // const accessProtected = async () => {
+  //   const protectedRequest = await store.getProtected()
+  //   console.log(protectedRequest)
+  //   return protectedRequest
+  // }
+  const sendData = async () => {
+    let payload = {
+      email: state.mail,
+      password: state.password
+      // password: state.password
+    }
+
+    const hashedPassword =
+      sha512(state.password) +
+      '__gny-b?QH06wr5rBR)*a5H!RR9zevVa!XMR@W4LXpgXXkmqy3zVP-T*S_YLxwj=v1xIAk-+u?TdgBlsIV)8PsqvZpWSn6#4J77/)6w?o6.@UC+nVpCU0j*x9j-K=vS+'
+    // console.log(hashedPassword)
+    // Récupérer l'utilisateur
+    const user = await store.getUser(state.mail, hashedPassword)
+
+    if (user) {
+        manage.succes = 'Connexion réussie !'
+        window.location.pathname = '/'
+    } else {
+      manage.error = "Nom d'utilisateur ou mot de passe incorrect"
+      return 1
     }
   }
 </script>
@@ -27,11 +61,11 @@
   <div class="main">
     <div class="content">
       <div class="title">
-        <p class="connect">Connection</p>
+        <p class="connect">Connexion</p>
       </div>
       <div class="title-image">
         <img
-          :src="logo"
+          src="../assets/logo/logo.svg"
           class="image"
         />
         <p class="logoName">TaalToolBox</p>
@@ -42,7 +76,7 @@
             <input
               class="mailPass"
               type="email"
-              placeholder="Mail"
+              placeholder="Email"
               v-model="state.mail"
             />
             <input
@@ -62,18 +96,31 @@
         >
           Se connecter
         </button>
+        <!-- <button
+          id="suivant"
+          class="clickButton"
+          @click="accessProtected"
+        >
+          protected
+        </button> -->
       </div>
-      <div class="error">
+      <div
+        class="error"
+        v-show="manage.error"
+      >
         {{ manage.error }}
+      </div>
+      <div
+        class="succes"
+        v-show="manage.succes"
+      >
+        {{ manage.succes }}
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-  .container2 {
-    padding: 38px;
-  }
   .main {
     padding: 70px;
     display: flex;
@@ -132,7 +179,6 @@
 
   input {
     color: #026b30;
-
     width: 100%;
     border-radius: 5px;
     padding: 3px;
@@ -140,11 +186,6 @@
     outline: none;
     margin-right: 50px;
   }
-
-  /* input[type='text'].mailPass {
-  padding: 4px;
-  margin-right: 100px;
-} */
 
   input::placeholder {
     color: #026b30;
@@ -183,20 +224,34 @@
     background-color: #026b30;
   }
   .connect {
+    display: flex;
+    justify-content: center;
     background-color: #026b30;
     color: white;
     flex-grow: 5;
     border-bottom: solid 1px grey;
     font-size: 1.5em;
-    text-align: center;
   }
   .error {
     color: red;
     padding-bottom: 5%;
     font-weight: bold;
   }
+  .succes {
+    color: green;
+    padding-bottom: 5%;
+    font-weight: bold;
+  }
   #suivant {
     color: white;
     background-color: #026b30;
+  }
+  @media (max-width: 768px) {
+    .content {
+      max-width: 350px;
+    }
+    .title {
+      min-width: 300px;
+    }
   }
 </style>

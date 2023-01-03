@@ -1,11 +1,54 @@
 <script setup lang="ts">
   import logo from '@/assets/logo/logo.svg'
+  import { useUserStore } from '@/stores/user'
+  import { ref } from 'vue'
+  import type { Ref } from 'vue'
 
-  const showTab = () => {
-    document.getElementsByClassName('rightTab')[0].style.display = 'inline'
+  const userStore = useUserStore()
+  let role: string[] = []
+
+  if (window.sessionStorage.getItem('x-xsrf-token')) {
+    const roleReq: any = await userStore.getUserScope()
+    if (roleReq && roleReq.role.length) {
+      role = roleReq.role
+    }
   }
-  const hideTab = () => {
-    document.getElementsByClassName('rightTab')[0].style.display = 'none'
+  const right_tab: any = ref(null)
+  const hamburger: any = ref(null)
+  const isShown: any = ref(false)
+
+  const showAddSubTab: Ref<boolean> = ref(false)
+
+  const toggleHamburger = () => {
+    if (isShown.value) {
+      right_tab.value.style.left = '100%'
+      hamburger.value.style.transform = 'rotate(0deg)'
+      isShown.value = false
+    } else {
+      right_tab.value.style.left = '65%'
+      hamburger.value.style.transform = 'rotate(90deg)'
+      isShown.value = true
+    }
+  }
+  const staticRole = {
+    admin: 'Administrateur',
+    creator: 'Créateur',
+    teacher: 'Professeur',
+    student: 'Elève'
+  }
+  // const role = userStore.user.role
+  const handleDisconnection = async () => {
+    // Cet appel n'a pas d'intérêt jusqu'à ce qu'on trouve un moyen de supprimer le cookie que l'utilisateur envoie en backend
+    // await userStore.logout()
+    window.sessionStorage.clear()
+    window.location.pathname = import.meta.env.VITE_LOGIN_ROUTE
+  }
+
+  const showAdd = () => {
+    showAddSubTab.value = true
+  }
+  const hideAdd = () => {
+    showAddSubTab.value = false
   }
 </script>
 
@@ -27,94 +70,198 @@
       <router-link
         class="tabs_element"
         to="/"
-        >Acceuil</router-link
+        >Accueil</router-link
       >
       <router-link
         class="tabs_element"
         to="/map"
+        v-show="
+          Object.values(staticRole).some((x) => {
+            return role.includes(x)
+          })
+        "
         >Carte</router-link
       >
       <router-link
-        to="/add-card"
         class="tabs_element"
-        >Ajouter</router-link
+        to="/profile"
+        v-show="
+          Object.values(staticRole).some((x) => {
+            return role.includes(x)
+          })
+        "
+        >Profil</router-link
       >
+      <div
+        class="tabs_element add_tab"
+        v-show="
+          [staticRole.admin, staticRole.teacher, staticRole.creator].some((x) => {
+            return role.includes(x)
+          })
+        "
+        @mouseenter="showAdd"
+        @mouseleave="hideAdd"
+      >
+        <button>Ajouter</button>
+        <div
+          class="add_tab_list"
+          v-show="showAddSubTab"
+        >
+          <router-link
+            to="/add-user"
+            class="tabs_element"
+            v-show="
+              [staticRole.admin, staticRole.teacher].some((x) => {
+                return role.includes(x)
+              })
+            "
+          >
+            <div v-if="role.includes(staticRole.admin)">Prof/Elève</div>
+            <div v-else>Elève</div>
+          </router-link>
+          <router-link
+            to="/choose-activities"
+            class="tabs_element"
+            v-show="
+              [staticRole.admin, staticRole.creator].some((x) => {
+                return role.includes(x)
+              })
+            "
+            >Activités</router-link
+          >
+          <router-link
+            to="/add-class"
+            class="tabs_element"
+            v-show="role.includes(staticRole.admin)"
+            >Classes</router-link
+          >
+        </div>
+      </div>
       <router-link
-        to="/"
+        to="/user-response-stats"
         class="tabs_element"
-        >Classe</router-link
+        v-show="
+          [staticRole.admin, staticRole.teacher].some((x) => {
+            return role.includes(x)
+          })
+        "
+        >Suivi</router-link
       >
     </div>
-
     <router-link
+      v-if="role.length"
+      class="conreg"
+      to="/login"
+      @click="handleDisconnection()"
+      >Se deconnecter</router-link
+    >
+    <router-link
+      v-else
       class="conreg"
       to="/login"
       >Se connecter</router-link
     >
     <div
+      ref="hamburger"
       class="hamburger"
-      @click="showTab"
+      @click="toggleHamburger"
     >
       <!-- On construit le hamburger -->
       <div class="build"></div>
       <div class="build"></div>
       <div class="build"></div>
     </div>
-    <div class="rightTab">
+    <div
+      class="rightTab"
+      ref="right_tab"
+    >
       <div class="content">
-        <div
-          class="hamburger_deploid"
-          @click="hideTab"
-        >
-          <!-- On construit le hamburger -->
-          <div class="build_deploid"></div>
-          <div class="build_deploid"></div>
-          <div class="build_deploid"></div>
-        </div>
         <router-link
           class="right_tab_element"
           to="/"
-          >Acceuil</router-link
+          >Accueil</router-link
         >
         <router-link
+          v-show="
+            Object.values(staticRole).some((x) => {
+              return role.includes(x)
+            })
+          "
           class="right_tab_element"
-          to="/"
-          >Carte</router-link
-        >
+          to="/map"
+          >Carte
+        </router-link>
         <router-link
-          to="/add-card"
+          v-show="
+            [staticRole.admin, staticRole.teacher].some((x) => {
+              return role.includes(x)
+            })
+          "
+          to="/add-user"
           class="right_tab_element"
-          >Ajouter</router-link
         >
+          <div v-if="role.includes(staticRole.admin)">Ajouter Prof/Elève</div>
+          <div v-else>Ajouter Elève</div>
+        </router-link>
         <router-link
-          to="/"
+          v-show="
+            [staticRole.admin, staticRole.creator].some((x) => {
+              return role.includes(x)
+            })
+          "
+          to="/choose-activities"
           class="right_tab_element"
-          >Classe</router-link
+          >Ajouter Activités</router-link
         >
         <router-link
-          to="/"
-          style="margin-top: 60vh; align-self: center"
+          to="#"
+          class="right_tab_element"
+          v-show="role.includes(staticRole.admin)"
+          >Ajouter Classes</router-link
+        >
+        <router-link
+          to="/user-response-stats"
+          class="tabs_element"
+          v-show="
+            [staticRole.admin, staticRole.creator].some((x) => {
+              role.includes(x)
+            })
+          "
+          >Suivi</router-link
+        >
+        <router-link
+          v-if="role.length"
+          class="hamburger_connreg"
+          to="/login"
+          @click="handleDisconnection()"
+          >Se deconnecter</router-link
+        >
+        <router-link
+          v-else
+          class="hamburger_connreg"
+          to="/login"
           >Se connecter</router-link
         >
       </div>
     </div>
   </div>
 </template>
-
 <style scoped>
   .main {
     width: 100vw;
-    max-width: 1500px;
-    border-bottom: 1px solid #707070;
+    max-width: 1600px;
+    border-bottom: 1px solid grey;
     height: 70px;
     display: flex;
     align-items: center;
     gap: 10%;
     font-family: NotoSans-Regular;
-    position: sticky;
+    position: fixed;
     background-color: white;
-    z-index: 3;
+    z-index: 5;
     margin: 0 auto;
+    justify-self: center;
+    top: 0;
   }
   .logo {
     height: 100%;
@@ -154,11 +301,29 @@
     font-size: 1.4em;
     color: #707070;
     text-align: center;
+    position: relative;
+  }
+  .add_tab {
+    position: relative;
+  }
+  .add_tab_list {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    background: white;
+    outline: 1px solid grey;
+    padding: 15px;
+    gap: 5px;
   }
   .tabs_element {
     width: max-content;
     position: relative;
     transition: ease 0.5s;
+    margin: auto 0;
+  }
+  .tabs_element div {
+    padding: auto 0;
   }
   .tabs_element:hover {
     color: #026b30;
@@ -204,7 +369,7 @@
   }
   .conreg {
     font-size: 1.2em;
-    text-align: left;
+    text-align: center;
     cursor: pointer;
     /* outline: green 1px solid; */
     margin-right: 15px;
@@ -212,8 +377,9 @@
   }
   .hamburger {
     display: none;
+    z-index: 10;
+    transition: 0.5s ease;
   }
-
   .build {
     width: 30px;
     height: 0px;
@@ -222,30 +388,27 @@
     border-radius: 2px;
   }
   .rightTab {
-    display: none;
-    width: 25%;
+    width: 35%;
     height: 100vh;
     top: 0;
-    left: 75%;
+    left: 100%;
     background-color: white;
     position: absolute;
-    z-index: 2;
-    border-left: 1px solid grey;
-    padding-left: 20px;
+    z-index: -1;
+    /* border-left: 1px solid grey; */
+    padding-top: 70px;
+    transition: 0.5s ease;
   }
   .content {
     display: flex;
     flex-direction: column;
-    flex-grow: 10;
     gap: 25px;
     font-size: 1.1em;
     color: #707070;
     text-align: left;
-    padding-top: 20px;
-    padding-bottom: 50px;
-    flex-grow: 5;
-    height: 100vh;
-    max-height: 600px;
+    outline: 1px solid grey;
+    height: 100%;
+    padding-top: 25px;
   }
   .hamburger_deploid {
     display: flex;
@@ -254,6 +417,7 @@
     cursor: pointer;
     align-self: flex-end;
     margin-right: 20px;
+    position: relative;
   }
   .build_deploid {
     width: 0px;
@@ -270,6 +434,7 @@
     font-size: 1em;
     text-align: left;
     width: 100%;
+    padding-left: 15%;
   }
   .right_tab_element:hover {
     color: #026b30;
@@ -279,30 +444,27 @@
   .right_tab_element::before {
     content: '';
     position: absolute;
-    width: 0px;
-    left: -15px;
-    top: 50%;
+    width: 10px;
+    left: 5px;
+    top: 0%;
     height: 5%;
-    transform: rotate(45deg);
-    background-color: #026b30;
-  }
-  .right_tab_element::after {
-    content: '';
-    position: absolute;
-    width: 0px;
-    left: -15px;
-    top: 50%;
-    height: 5%;
-    transform: rotate(-45deg);
-    background-color: #026b30;
+    /* background-color: #026b30; */
   }
   .right_tab_element:hover::before {
-    width: 10px;
+    content: '>';
   }
-  .right_tab_element:hover::after {
-    width: 10px;
+  .hamburger_connreg {
+    position: absolute;
+    top: 90%;
+    font-size: 3.5vw;
+    font-weight: bold;
+    color: #026b30;
+    text-align: center;
+    margin-left: 20px;
   }
-
+  .hamburger_connreg:hover {
+    border-bottom: 1px solid #026b30;
+  }
   @media (min-width: 701px) {
     .rightTab {
       visibility: hidden;
@@ -322,6 +484,14 @@
     }
     .conreg {
       font-size: 1em;
+    }
+  }
+  @media (max-width: 750px) {
+    .tabs {
+      font-size: 0.8em;
+    }
+    .conreg {
+      font-size: 0.8em;
     }
   }
   @media (max-width: 700px) {

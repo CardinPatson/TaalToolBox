@@ -3,42 +3,37 @@
   import Class from '@/components/profile/Class.vue'
   import Success from '@/components/profile/Success.vue'
   import MainHeader from '@/components/headers/MainHeader.vue'
+  import { useUserStore } from '@/stores/user'
   import { ref } from 'vue'
+  const userStore = useUserStore()
   //const store = useCardStore()
   //const remaining = computed(() => store.remaining)
+  // Vérification de l'utilisateur
+
   const comp = ref(0)
 
-  function changeComp(nb: number){
-    comp.value = nb;
-  }
-
-  function logOut(){
-    //à completer
+  function changeComp(nb: number) {
+    comp.value = nb
   }
 </script>
 
 <template>
   <div>
-    <MainHeader />
+    <Suspense>
+      <MainHeader />
+    </Suspense>
   </div>
   <div class="contents">
     <div class="buttons">
-      <button @click="changeComp(0)">
-        Profil
-      </button>
-      <button @click="changeComp(1)">
-        Classe
-      </button>
-      <button @click="changeComp(2)">
-        Succès
-      </button>
-      <button @click="logOut">
-        Log out
-      </button>
+      <button @click="changeComp(0)">Profil</button>
+      <button @click="changeComp(1)">Classe</button>
+      <button @click="changeComp(2)">Succès</button>
     </div>
     <div class="compP">
       <div v-if="comp == 0">
-        <Profile />
+        <Suspense>
+          <Profile />
+        </Suspense>
       </div>
       <div v-else-if="comp == 1">
         <Class />
@@ -51,7 +46,7 @@
 </template>
 
 <style scoped>
-  .contents{
+  .contents {
     display: flex;
     flex-direction: row;
   }
@@ -62,7 +57,7 @@
     border: 4px double #cccccc;
     color: #242928;
     text-align: center;
-    font-size: 28px;
+    font-size: 55px;
     padding: 40px;
     margin: 8%;
     width: 100%;
@@ -75,19 +70,19 @@
   button:hover {
     background-color: green;
   }
-  .buttons{
+  .buttons {
     float: left;
     margin-top: 5%;
   }
-  .compP{
+  .compP {
     border: ridge 5px #cccccc;
-    height: 20em;
+    height: 32em;
     margin-top: 6%;
     margin-left: 2%;
     padding: 5%;
     width: 80%;
     display: block;
     float: left;
-    font-size: 28px;
+    font-size: 18px;
   }
 </style>

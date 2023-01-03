@@ -1,75 +1,77 @@
-import {
-  Module,
-  NestModule,
-  RequestMethod,
-  MiddlewareConsumer,
-} from '@nestjs/common';
+import { AuthModule } from './auth/auth.module';
+import { UserResponseModule } from './user_response/user_response.module';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { MulterModule } from '@nestjs/platform-express';
 import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ActivitiesModule } from './activities/activities.module';
 import { CardsModule } from './cards/cards.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CategoryModule } from './category/category.module';
 import { LangModule } from './lang/lang.module';
 import { RoleModule } from './role/role.module';
 import { AnswerModule } from './answer/answer.module';
 import { LearnDomainModule } from './learn_domain/learn_domain.module';
-// import { RewardModule } from './reward/reward.module';
-import { WeightCardModule } from './weight_card/weight_card.module';
-import { UsersController } from './users/users.controller';
-import { UsersService } from './users/users.service';
+import { ProficiencyModule } from './proficiency/proficiency.module';
 import { UsersModule } from './users/users.module';
-import { AuthModule } from './Auth/auth/auth.module';
+import { SchoolclassModule } from './schoolclass/schoolclass.module';
+import { SchoolModule } from './school/school.module';
+import { ActivityModule } from './activity/activity.module';
+import { DragModule } from './drag_and_drop/drag_and_drop.module';
+import { CardsThemeModule } from './cards_theme/cards_theme.module';
+import { LevelMapModule } from './level_map/level_map.module';
+import { LevelDifficultyModule } from './level_difficulty/level_difficulty.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    ActivitiesModule,
-    CardsModule,
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5433,
-      username: 'postgres',
-      password: process.env.POSTGRES_PASSWORD,
-      database: 'language_project',
-      autoLoadEntities: true,
-      synchronize: true, // ! SET TO FALSE IN PRODUCTION
-    }),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public'),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: 'postgres-db',
+        port: 5432,
+        username: 'postgres',
+        password: process.env.POSTGRES_PASSWORD,
+        database: configService.get('POSTGRES_DB'),
+        autoLoadEntities: true,
+        entities: [],
+        synchronize: false,
+        // synchronize: true, // ! SET TO FALSE IN PRODUCTION
+      }),
     }),
     MulterModule.register({
       dest: join(__dirname, '..', 'public/images'),
     }),
-    CategoryModule,
+    // Card depend on theme and difficulty
+    ActivityModule,
     LangModule,
-    RoleModule,
     AnswerModule,
+    RoleModule,
     LearnDomainModule,
-    WeightCardModule,
-    // RewardModule,
+    CategoryModule,
+    LevelDifficultyModule,
+    CardsThemeModule,
+    CardsModule,
+    UsersModule,
+    // AuthModule,
+    SchoolModule,
+    SchoolclassModule,
     UsersModule,
     AuthModule,
+    ProficiencyModule,
+    DragModule,
+    LevelMapModule,
+    UserResponseModule,
   ],
-  controllers: [AppController, UsersController],
-  providers: [AppService, UsersService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(/**Middleware function
-       */)
-      .exclude(
-        { path: 'cards', method: RequestMethod.GET },
-        { path: 'cards', method: RequestMethod.PATCH },
-        { path: 'cards', method: RequestMethod.DELETE },
-        'cards/(.*)',
-      )
-      .forRoutes('cards/upload');
+    consumer.apply().forRoutes('cards/upload');
   }
 }

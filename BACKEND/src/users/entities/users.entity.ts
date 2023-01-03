@@ -3,11 +3,12 @@ import {
   Entity,
   JoinTable,
   ManyToMany,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Classroom } from './class.entity';
-import { Role } from './roles.entity';
-
+import { Role } from '../../role/entities/role.entity';
+import { Schoolclass } from '../../schoolclass/entities/schoolclass.entity';
+import { Lang } from '../../lang/entities/lang.entity';
 @Entity()
 export class Users {
   @PrimaryGeneratedColumn('increment')
@@ -19,23 +20,33 @@ export class Users {
   @Column('character varying')
   surname: string;
 
-  @Column()
+  @Column('character varying')
   email: string;
 
   @Column('character varying')
+  schoolEmail: string;
+
+  @Column()
   password: string;
 
-  @Column('date')
+  @Column('character varying')
   birthdate: string;
 
-  @Column('character varying')
-  telephone: string;
+  @Column()
+  sex: string;
+
+  @Column({ nullable: true })
+  score: number;
 
   @ManyToMany(() => Role)
   @JoinTable()
   role: Role[];
 
-  @ManyToMany(() => Classroom)
+  @ManyToMany(() => Schoolclass)
   @JoinTable()
-  class: Classroom[];
+  schoolclass: Schoolclass[];
+
+  //chaque utilisateur possède une seule langue
+  @ManyToOne(() => Lang, (lang) => lang.users)
+  lang: Lang;
 }

@@ -8,8 +8,7 @@ import {
   Delete,
   UseInterceptors,
   UploadedFile,
-  Req,
-  Res,
+  Query,
 } from '@nestjs/common';
 import { diskStorage } from 'multer';
 import { imageFileFilter, editFileName } from './image.middleware';
@@ -17,8 +16,8 @@ import { CardsService } from './cards.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiParam } from '@nestjs/swagger';
 import { Cards } from './cards.decorator';
-// import { diskStorage } from 'multer';
 
 @Controller('cards')
 export class CardsController {
@@ -26,6 +25,7 @@ export class CardsController {
 
   @Post()
   create(@Body() createCardDto: CreateCardDto) {
+    console.log('Controller : ', createCardDto);
     return this.cardsService.create(createCardDto);
   }
 
@@ -35,8 +35,29 @@ export class CardsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.cardsService.findOne(+id);
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'Should be an id of a card that exists in the database',
+    type: Number,
+  })
+  async findOne(@Param('id') id: string) {
+    return await this.cardsService.findOne(parseInt(id));
+  }
+
+  @Get(':id_user/:nbrcards')
+  @ApiParam({
+    name: 'id_user',
+    required: true,
+    description:
+      'Should be an id of a user that exists in the database and has an active session',
+    type: Number,
+  })
+  findMany(
+    @Param('id_user') id_user: number,
+    @Param('nbrcards') nbrcards: number,
+  ) {
+    return this.cardsService.findMany(+id_user, +nbrcards);
   }
 
   @Patch(':id')
@@ -63,8 +84,13 @@ export class CardsController {
     }),
   )
   uploadImage(@UploadedFile() file, @Cards() req) {
-    console.log('card decorateur --- ', req);
     return this.cardsService.uploadImage(req, file);
+  }
+
+  @Get('number')
+  getSpecificNumberOfCards(@Query() query: { number: string }) {
+    console.log(query);
+    console.log('inside');
   }
 
   @Post('upload')

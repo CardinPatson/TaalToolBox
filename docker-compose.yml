@@ -1,0 +1,69 @@
+version: '3.8'
+services:
+  proxy-nginx:
+    image: rachiid007/frontend:latest
+    # build:
+    #   context: ./WEB
+    #   dockerfile: Dockerfile
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /home/ubuntu/TaalToolBox/certbot/www:/var/www/certbot/
+      - /home/ubuntu/TaalToolBox/certbot:/etc/nginx/ssl/
+    depends_on:
+      - nestjs
+    restart: always
+    environment:
+      - VITE_API_KEY=${VITE_API_KEY}
+    # deploy:
+    #   replicas: 3
+    #   update_config:
+    #     parallelism: 1
+    #     delay: 10s
+    #   restart_policy:
+    #     condition: on-failure
+    #     delay: 5s
+
+  postgres-db:
+    image: postgres
+    container_name: postgres-db
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  nestjs:
+    image: rachiid007/backend:latest
+    # build:
+    #   context: ./BACKEND
+    #   dockerfile: Dockerfile
+    depends_on:
+      - postgres-db
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH=${JWT_REFRESH}
+    # deploy:
+    #   replicas: 3
+    #   update_config:
+    #     parallelism: 1
+    #     delay: 10s
+    #   restart_policy:
+    #     condition: on-failure
+    #     delay: 5s
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --cleanup --interval 30 --include-restarting proxy-nginx nestjs
+
+volumes:
+  db:
+    driver: local

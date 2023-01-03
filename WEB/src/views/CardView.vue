@@ -3,18 +3,12 @@
   import RemainingCard from '@/components/card/RemainingCard.vue'
   import ButtonValidation from '@/components/card/ButtonValidation.vue'
   import TheHeader from '@/components/TheHeader.vue'
-  import { useCardStore } from '@/stores/card'
   import { useShowStore } from '@/stores/show'
-  import { computed, ref } from 'vue'
-  const store = useCardStore()
+  import { computed } from 'vue'
+  import { useUserStore } from '@/stores/user'
   const storeShow = useShowStore()
   const showButtonValidation = computed(() => storeShow.getShowButtonValidation())
-
-  //pour faire remonter l'état au composant parent
-  const showButtonReveal = computed(() => storeShow.getShowButtonReveal())
-  const showAnswer = computed(() => storeShow.getShowAnswer())
-  const remaining = computed(() => store.remaining)
-  const card = computed(() => store.getCurrentDeck())
+  const userStore = useUserStore()
 </script>
 <!-- Est ce qu'il yaura ou pas un header -->
 <template>
@@ -32,7 +26,9 @@
       </div>
       <div class="play-card">
         <div class="card">
-          <MainCard />
+          <Suspense>
+            <MainCard />
+          </Suspense>
         </div>
         <!-- <div class="answer">inside answer card</div> -->
         <div class="validation-button">
@@ -56,17 +52,16 @@
     margin: 0 auto;
     width: 100%;
     height: 100vh;
+    overflow: hidden;
   }
   .container {
     /* border: solid blue 1px; */
+    margin-top: 5%;
     display: flex;
     align-items: center;
     justify-content: center;
     max-width: 1600px;
     height: auto;
-  }
-  .rest-card {
-    /* border: solid green 1px; */
   }
   .validation-button {
     /* display: none; */
@@ -76,7 +71,6 @@
   .play-card {
     /* border: solid red 1px; */
     flex: 0.7;
-
     /* margin: 0 auto; */
     display: flex;
     flex-direction: column;
@@ -89,9 +83,11 @@
     margin-left: 16%;
     padding: 5px;
   }
+
   @media (max-width: 768px) {
     .container {
-      padding: 10px;
+      padding: 0px;
+      flex-direction: column;
     }
     .rest-card {
       /* border: solid red 1px; */
@@ -99,7 +95,19 @@
       height: auto;
     }
     .play-card {
-      flex: 0.8;
+      justify-content: center;
+      flex: 0.6;
+    }
+    .card {
+      margin-left: 0;
+      padding: 5px;
+    }
+
+    .title {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      font-size: 10px;
     }
   }
   .title {

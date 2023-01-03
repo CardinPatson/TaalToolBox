@@ -1,18 +1,19 @@
-<script lang="ts">
+<script setup lang="ts">
   import Map from '@/components/Map.vue'
-
-  export default {
-    name: 'App',
-    components: {
-      Map
-    }
-  }
+  import useMapStore from '@/stores/map'
+  import MainHeader from '@/components/headers/MainHeader.vue'
+  const mapStore = useMapStore()
 </script>
 
 <template>
   <main>
     <!-- <template #data> HELLO </template> -->
-    <Map />
+    <Suspense>
+      <MainHeader />
+    </Suspense>
+    <Suspense>
+      <Map />
+    </Suspense>
   </main>
 </template>
 <style scoped>
@@ -20,10 +21,12 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    /* overflow: hidden; */
   }
   #map {
     height: 1000px;
     width: 100%;
+    max-width: 1600px;
     margin: 0;
     padding: 0;
   }
